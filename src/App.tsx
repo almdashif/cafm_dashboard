@@ -1,8 +1,14 @@
 import React, { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import jsPDF from "jspdf";
-import "jspdf-autotable"; // Ensure this line is added
+import autoTable from 'jspdf-autotable';
 
+
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: typeof autoTable;
+  }
+}
 import './App.css';
 
 type StatusKey = 'Completed' | 'Due' | 'Reported' | 'Started' | 'Total';
@@ -49,7 +55,7 @@ const App: React.FC = () => {
 
       const operativeSummaryMap: Record<string, { total: number; completed: number; pending: number }> = {};
       formattedObjects.forEach((row) => {
-        const operative = row['Operative'];
+        const operative = row['Operative'] ?? '-';
         const status = row['Status'];
         if (!operativeSummaryMap[operative]) {
           operativeSummaryMap[operative] = { total: 0, completed: 0, pending: 0 };
@@ -112,12 +118,12 @@ const App: React.FC = () => {
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setDragging(true); // Enable dragging backdrop when file is being dragged
+    setDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setDragging(false); // Disable dragging backdrop when file leaves the drop area
+    setDragging(false);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,9 +164,9 @@ const App: React.FC = () => {
 
 
   const downloadAsXLSX = () => {
-    // Check if statusSummaryData or operativeTable is empty
+   
     if (statusSummaryData.length === 0 || operativeTable.length === 0) {
-      // Show alert if no file has been uploaded yet
+ 
       alert('Please upload a valid .xlsx file first.');
       return;
     }
@@ -192,28 +198,28 @@ const App: React.FC = () => {
 
     // Add Event Status Summary table
     doc.text('Event Status Summary', 14, 16);
-    doc.autoTable({
+    autoTable(doc, {
       startY: 20,
       head: [['Event Status', 'Count']],
       body: statusSummaryData,
-      theme: 'striped', // Optional theme
+      theme: 'striped',
       styles: { cellPadding: 2, fontSize: 10 },
     });
 
-    // Ensure proper finalY value before adding the next table
-    const yAfterStatusSummary = doc.autoTable.previous.finalY + 10;
 
-    // Add Operative PPM Summary table
+    const yAfterStatusSummary = (doc as any).lastAutoTable.finalY + 10;
+
+   
     doc.text('Operative PPM Summary', 14, yAfterStatusSummary);
-    doc.autoTable({
+    autoTable(doc, {
       startY: yAfterStatusSummary + 10,
       head: [['Mob_Optr', 'No.of.PPM', 'Completed PPM', 'Pending PPM']],
       body: operativeTable,
-      theme: 'striped', // Optional theme
+      theme: 'striped', 
       styles: { cellPadding: 2, fontSize: 10 },
     });
 
-    // Save the PDF with a random file name
+   
     doc.save(`Summary_${rand}.pdf`);
   };
 
@@ -223,9 +229,9 @@ const App: React.FC = () => {
       return;
     }
 
-    const rand = Math.floor(10000 + Math.random() * 9000000); // Unique file identifier
+    const rand = Math.floor(10000 + Math.random() * 9000000); 
 
-    // Convert each section to CSV string
+   
     const statusCSV = [
       ['Event Status', 'Count'],
       ...statusSummaryData
@@ -240,10 +246,8 @@ const App: React.FC = () => {
       .map((row) => row.join(','))
       .join('\n');
 
-    // Combine both CSV sections with an empty line between
     const fullCSV = `${statusCSV}\n\n${operativeCSV}`;
 
-    // Trigger download
     const blob = new Blob([fullCSV], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -257,12 +261,12 @@ const App: React.FC = () => {
 
   return (
     <div style={{ padding: '2rem', position: 'relative' }}>
-      {/* Download Button */}
+    
       <div className='btnContainer'>
         <button onClick={downloadAsXLSX} >
           Download XLSX
         </button>
-        {/* <button onClick={downloadAsPDF}>Download PDF</button> */}
+        <button onClick={downloadAsPDF}>Download PDF</button>
         <button onClick={downloadAsCSV} >Download CSV</button>
 
       </div>
