@@ -55,7 +55,7 @@ const App: React.FC = () => {
 
       const operativeSummaryMap: Record<string, { total: number; completed: number; pending: number }> = {};
       formattedObjects.forEach((row) => {
-        const operative = row['Operative'] ?? '-';
+        const operative = row['Operative'] ?? 'Not Assigned';
         const status = row['Status'];
         if (!operativeSummaryMap[operative]) {
           operativeSummaryMap[operative] = { total: 0, completed: 0, pending: 0 };
@@ -164,9 +164,9 @@ const App: React.FC = () => {
 
 
   const downloadAsXLSX = () => {
-   
+
     if (statusSummaryData.length === 0 || operativeTable.length === 0) {
- 
+
       alert('Please upload a valid .xlsx file first.');
       return;
     }
@@ -209,17 +209,17 @@ const App: React.FC = () => {
 
     const yAfterStatusSummary = (doc as any).lastAutoTable.finalY + 10;
 
-   
+
     doc.text('Operative PPM Summary', 14, yAfterStatusSummary);
     autoTable(doc, {
       startY: yAfterStatusSummary + 10,
       head: [['Mob_Optr', 'No.of.PPM', 'Completed PPM', 'Pending PPM']],
       body: operativeTable,
-      theme: 'striped', 
+      theme: 'striped',
       styles: { cellPadding: 2, fontSize: 10 },
     });
 
-   
+
     doc.save(`Summary_${rand}.pdf`);
   };
 
@@ -229,9 +229,9 @@ const App: React.FC = () => {
       return;
     }
 
-    const rand = Math.floor(10000 + Math.random() * 9000000); 
+    const rand = Math.floor(10000 + Math.random() * 9000000);
 
-   
+
     const statusCSV = [
       ['Event Status', 'Count'],
       ...statusSummaryData
@@ -257,19 +257,37 @@ const App: React.FC = () => {
     link.click();
     document.body.removeChild(link);
   };
+  
+  const handleReset = () => {
+    setTables([]);
+    setCountTable({
+      Completed: [],
+      Due: [],
+      Reported: [],
+      Started: [],
+      Total: [],
+    });
+    setOperativeTable([]);
+    setLoading(false);
+  };
+  
 
 
   return (
-    <div style={{ padding: '2rem', position: 'relative' }}>
-    
-      <div className='btnContainer'>
-        <button onClick={downloadAsXLSX} >
-          Download XLSX
-        </button>
-        <button onClick={downloadAsPDF}>Download PDF</button>
-        <button onClick={downloadAsCSV} >Download CSV</button>
+    <div className='mainContainer'>
+      <header>
+        <div className="logoContainer">
+          <img src="/logo.jpeg" alt="" />
+        </div>
+        <div className='btnContainer'>
+          <button onClick={downloadAsXLSX}>Download XLSX</button>
+          <button onClick={downloadAsPDF}>Download PDF</button>
+          <button onClick={downloadAsCSV}>Download CSV</button>
+          <button onClick={handleReset} style={{backgroundColor:'red'}}>Reset</button>
+        </div>
+      </header>
 
-      </div>
+
       <div
         onDrop={handleDrop}
         onDragOver={handleDragOver}
