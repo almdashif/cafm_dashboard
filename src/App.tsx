@@ -61,7 +61,7 @@ const App: React.FC = () => {
           operativeSummaryMap[operative] = { total: 0, completed: 0, pending: 0 };
         }
         operativeSummaryMap[operative].total++;
-        if (status === 'Completed' || status === 'RTS') {
+        if (status?.toLowerCase() === 'completed' || status?.toLowerCase() === 'rts') {
           operativeSummaryMap[operative].completed++;
         } else {
           operativeSummaryMap[operative].pending++;
@@ -78,7 +78,7 @@ const App: React.FC = () => {
 
       formattedObjects.forEach((row) => {
         const status = row['Status'] as StatusKey;
-        if (status === 'RTS') {
+        if (status?.toLowerCase() === 'rts') {
           statusGroups['Completed'].push(row);
         } else if (statusGroups[status]) {
           statusGroups[status].push(row);
