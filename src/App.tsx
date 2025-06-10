@@ -61,7 +61,7 @@ const App: React.FC = () => {
           operativeSummaryMap[operative] = { total: 0, completed: 0, pending: 0 };
         }
         operativeSummaryMap[operative].total++;
-        if (status === 'Completed') {
+        if (status === 'Completed' || status === 'RTS') {
           operativeSummaryMap[operative].completed++;
         } else {
           operativeSummaryMap[operative].pending++;
@@ -78,7 +78,9 @@ const App: React.FC = () => {
 
       formattedObjects.forEach((row) => {
         const status = row['Status'] as StatusKey;
-        if (statusGroups[status]) {
+        if (status === 'RTS') {
+          statusGroups['Completed'].push(row);
+        } else if (statusGroups[status]) {
           statusGroups[status].push(row);
         }
       });
@@ -257,7 +259,7 @@ const App: React.FC = () => {
     link.click();
     document.body.removeChild(link);
   };
-  
+
   const handleReset = () => {
     setTables([]);
     setCountTable({
@@ -270,7 +272,7 @@ const App: React.FC = () => {
     setOperativeTable([]);
     setLoading(false);
   };
-  
+
 
 
   return (
@@ -283,7 +285,7 @@ const App: React.FC = () => {
           <button onClick={downloadAsXLSX}>Download XLSX</button>
           <button onClick={downloadAsPDF}>Download PDF</button>
           <button onClick={downloadAsCSV}>Download CSV</button>
-          <button onClick={handleReset} style={{backgroundColor:'red'}}>Reset</button>
+          <button onClick={handleReset} style={{ backgroundColor: 'red' }}>Reset</button>
         </div>
       </header>
 
