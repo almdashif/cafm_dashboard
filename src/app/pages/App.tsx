@@ -1,7 +1,9 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { useAuth } from "../providers/AuthContext";
+import { authUtils } from "../../shared/utils/authUtils";
 
 declare module "jspdf" {
   interface jsPDF {
@@ -19,6 +21,7 @@ interface PivotEntry {
 }
 
 const App: React.FC = () => {
+  const { user, logout } = useAuth();
   const [tables, setTables] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -37,6 +40,19 @@ const App: React.FC = () => {
 
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Update user's last active time
+  useEffect(() => {
+    // Update immediately when component mounts
+    authUtils.updateLastActive();
+
+    // Update every 5 minutes while user is active
+    const interval = setInterval(() => {
+      authUtils.updateLastActive();
+    }, 5 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleFile = (file: File) => {
     if (!file || !file.name.endsWith(".xlsx")) {
@@ -292,146 +308,163 @@ const App: React.FC = () => {
   };
 
   const renderTable = (data: (string | number)[][], title?: string[]) => (
-    <div style={{ margin: "2rem 0" }}>
-      <table style={{ borderCollapse: "collapse", width: "100%" }}>
-        <thead>
-          <tr className="theadStyle">
-            {title?.map((cell, i) => (
-              <th key={i} style={{ border: "1px solid #999", padding: "6px" }}>
-                {cell}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {data.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                <td
-                  key={cellIndex}
-                  style={{
-                    border: "1px solid #999",
-                    padding: "6px",
-                    backgroundColor:
-                      cell === "Event Rejected"
-                        ? "#f8d7da"
-                        : cell === "Grand Total"
-                        ? "#d4edda"
-                        : "transparent",
-                  }}
-                >
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+    <div className="data-card">
+      <div className="card-header">
+        <h3 className="card-title">{title?.[0] || "Data Table"}</h3>
+      </div>
+      <div className="card-content">
+        <div className="table-container">
+          <div className="table-wrapper">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  {title?.map((cell, i) => (
+                    <th key={i}>{cell}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <td
+                        key={cellIndex}
+                        style={{
+                          backgroundColor:
+                            cell === "Event Rejected"
+                              ? "#be3121"
+                              : cell === "Grand Total"
+                              ? "#308d46"
+                              : "transparent",
+                        }}
+                      >
+                        {cell}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   );
 
   return (
-    <div className="mainContainer">
-      <header>
-        <div className="logoContainer">
-          <img src="/logo.jpeg" alt="" />
-        </div>
-        <div className="btnContainer">
-          <button onClick={downloadAsXLSX}>Download XLSX</button>
-          <button onClick={downloadAsPDF}>Download PDF</button>
-          <button onClick={downloadAsCSV}>Download CSV</button>
-          <button onClick={handleReset} style={{ backgroundColor: "red" }}>
-            Reset
-          </button>
+    <div className="app-container">
+      <header className="app-header">
+        <div className="header-content">
+          <div className="header-left">
+            <div className="logo-section">
+              <img src="/logo.jpeg" alt="Logo" className="header-logo" />
+              <h1 className="app-title">CAFM Dashboard</h1>
+            </div>
+          </div>
+          <div className="header-right">
+            <div className="user-info">
+              <div className="user-avatar">
+                {user?.username?.charAt(0).toUpperCase() || 'U'}
+              </div>
+              <div className="user-details">
+                <span className="username">{user?.username}</span>
+                <button className="logout-btn" onClick={logout}>
+                  Logout
+                </button>
+              </div>
+            </div>
+            <div className="export-controls">
+              <div className="export-buttons">
+                <button className="export-btn xlsx" onClick={downloadAsXLSX}>
+                  Download XLSX
+                </button>
+                <button className="export-btn pdf" onClick={downloadAsPDF}>
+                  Download PDF
+                </button>
+                <button className="export-btn csv" onClick={downloadAsCSV}>
+                  Download CSV
+                </button>
+                <button className="reset-btn" onClick={handleReset}>
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </header>
 
-      <div
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          handleFile(e.dataTransfer.files[0]);
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={(e) => {
-          e.preventDefault();
-          setDragging(false);
-        }}
-        style={{ padding: "2rem", position: "relative" }}
-      >
-        {dragging && (
+      <main className="app-main">
+        {/* Upload Section */}
+        <section className="upload-section">
           <div
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: "rgba(0,0,0,0.6)",
-              zIndex: 9999,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "white",
-              fontSize: "2rem",
-              fontWeight: "bold",
-              pointerEvents: "none",
+            className={`drop-zone ${dragging ? 'dragging' : ''}`}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              handleFile(e.dataTransfer.files[0]);
             }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={(e) => {
+              e.preventDefault();
+              setDragging(false);
+            }}
+            onClick={() => fileInputRef.current?.click()}
           >
-            Drop your file here...
+            <div className="drop-zone-content">
+              <div className="upload-icon">📁</div>
+              <h2 className="upload-title">Upload Excel File</h2>
+              <p className="upload-subtitle">Drag & drop a .xlsx file here, or click to browse</p>
+              <button className="browse-btn">Choose File</button>
+              <p className="file-types">Supported format: .xlsx</p>
+            </div>
+            <input
+              type="file"
+              accept=".xlsx"
+              ref={fileInputRef}
+              onChange={(e) => {
+                if (e.target.files?.[0]) handleFile(e.target.files[0]);
+              }}
+              style={{ display: "none" }}
+            />
           </div>
-        )}
+        </section>
 
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          style={{
-            border: "2px dashed #888",
-            padding: "2rem",
-            textAlign: "center",
-            borderRadius: "8px",
-            cursor: "pointer",
-            background: "#f9f9f9",
-          }}
-        >
-          <p>Drag & drop a .xlsx file here, or click to browse</p>
-          <input
-            type="file"
-            accept=".xlsx"
-            ref={fileInputRef}
-            onChange={(e) => {
-              if (e.target.files?.[0]) handleFile(e.target.files[0]);
-            }}
-            style={{ display: "none" }}
-          />
-        </div>
-
+        {/* Loading State */}
         {loading && (
-          <div style={{ textAlign: "center", marginTop: "2rem" }}>
-            <div className="spinner"></div>
-            <p>Loading...</p>
+          <div className="loading-container">
+            <div className="loading-content">
+              <div className="loading-spinner"></div>
+              <p className="loading-text">Processing your file...</p>
+            </div>
           </div>
         )}
 
-        {/* P11/P15 Tables */}
-        {!loading && statusSummaryData.length > 0 && operativeTable.length > 0 && (
-          <>
-            {renderTable(statusSummaryData, ["Event Status", "Count"])}
-            {renderTable(operativeTable, ["Mob_Optr", "No.of.PPM", "Completed PPM", "Pending PPM"])}
-          </>
-        )}
+        {/* Results Section */}
+        {!loading && (statusSummaryData.length > 0 || Object.keys(pivotTables).length > 0) && (
+          <section className="results-section">
+            <div className="tables-container">
+              {/* P11/P15 Tables */}
+              {statusSummaryData.length > 0 && operativeTable.length > 0 && (
+                <>
+                  {renderTable(statusSummaryData, ["Event Status", "Count"])}
+                  {renderTable(operativeTable, ["Mob_Optr", "No.of.PPM", "Completed PPM", "Pending PPM"])}
+                </>
+              )}
 
-        {/* Other priorities pivot tables */}
-        {!loading &&
-          Object.entries(pivotTables).map(([priority, entries]) =>
-            renderTable(
-              entries.map((e) => [e.status, e.count]),
-              [`${priority} (WO STATUS)`, "No.of.Events"]
-            )
-          )}
-      </div>
+              {/* Other priorities pivot tables */}
+              {Object.entries(pivotTables).map(([priority, entries]) =>
+                renderTable(
+                  entries.map((e) => [e.status, e.count]),
+                  [`${priority} STATUS`, "No.of.Events"]
+                )
+              )}
+            </div>
+          </section>
+        )}
+      </main>
     </div>
   );
 };
