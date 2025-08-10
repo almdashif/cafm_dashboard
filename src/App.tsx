@@ -428,7 +428,7 @@ const App: React.FC = () => {
           Object.entries(pivotTables).map(([priority, entries]) =>
             renderTable(
               entries.map((e) => [e.status, e.count]),
-              [`${priority} STATUS`, "No.of.Events"]
+              [`${priority} (WO STATUS)`, "No.of.Events"]
             )
           )}
       </div>
