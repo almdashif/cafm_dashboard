@@ -34,8 +34,11 @@ export const useFileHandler = () => {
       
       if (priorityInfo.isPriorityCodeP11OrP15) {
         // For P11/P15: Use operative summary logic
-        operativeSummaryData = processOperativeSummary(formattedObjects);
-        const statusGroups = processStatusGroups(formattedObjects, true);
+        // Fix: Remove undefined from processOperativeSummary result
+        operativeSummaryData = processOperativeSummary(formattedObjects).map(row =>
+          row.filter((cell): cell is string | number => cell !== undefined)
+        );
+        const statusGroups = processStatusGroups(formattedObjects);
         setCountTable(statusGroups);
       } else if (priorityInfo.isOtherPriorityCode) {
         // For P12/P13/P14/P16: Use workflow status logic
@@ -49,11 +52,14 @@ export const useFileHandler = () => {
         });
       } else {
         // Default logic for non-priority files
-        operativeSummaryData = processOperativeSummary(formattedObjects);
-        const statusGroups = processStatusGroups(formattedObjects, false);
+        // Fix: Remove undefined from processOperativeSummary result
+        operativeSummaryData = processOperativeSummary(formattedObjects).map(row =>
+          row.filter((cell): cell is string | number => cell !== undefined)
+        );
+        // Fix: processStatusGroups expects only one argument
+        const statusGroups = processStatusGroups(formattedObjects);
         setCountTable(statusGroups);
       }
-      
       setTables(formattedObjects);
       setOperativeTable(operativeSummaryData);
       setOtherPriorityTable(otherPriorityData);

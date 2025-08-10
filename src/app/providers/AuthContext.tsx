@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, LoginCredentials } from '../../shared/types';
-import { authUtils, StoredUser } from '../../shared/utils/authUtils';
+import { User } from '../../shared/types';
+import { authUtils } from '../../shared/utils/authUtils';
 
 interface AuthContextType {
   user: User | null;

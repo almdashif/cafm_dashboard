@@ -37,7 +37,7 @@ export const processOperativeSummary = (data: ExcelRow[]): (string | number)[][]
   // In production, this would have more complex logic based on business requirements
   const summary = data.reduce((acc, row) => {
     const operator = row['Mob_Optr'] || 'Unknown';
-    const existing = acc.find(item => item[0] === operator);
+    const existing = acc.find((item: [string, number]) => item[0] === operator);
     
     if (existing) {
       existing[1] = (existing[1] as number) + 1;
@@ -53,12 +53,12 @@ export const processOperativeSummary = (data: ExcelRow[]): (string | number)[][]
     }
     
     return acc;
-  }, [] as (string | number)[][]);
+  }, [] as any);
 
   return summary;
 };
 
-export const processStatusGroups = (data: ExcelRow[], isPriorityCode: boolean): any => {
+export const processStatusGroups = (data: ExcelRow[]): any => {
   const groups = {
     Completed: [] as ExcelRow[],
     Due: [] as ExcelRow[],
@@ -88,7 +88,7 @@ export const processWorkflowStatus = (data: ExcelRow[]): (string | number)[][] =
   // Process workflow status data
   const statusCounts = data.reduce((acc, row) => {
     const status = row['WO Status'] || 'Unknown';
-    const existing = acc.find(item => item[0] === status);
+    const existing = acc.find((item:[string, number])  => item[0] === status);
     
     if (existing) {
       existing[1] = (existing[1] as number) + 1;
@@ -97,7 +97,7 @@ export const processWorkflowStatus = (data: ExcelRow[]): (string | number)[][] =
     }
     
     return acc;
-  }, [] as (string | number)[][]);
+  }, [] as any);
 
   return statusCounts;
 };
